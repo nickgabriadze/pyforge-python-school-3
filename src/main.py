@@ -1,3 +1,5 @@
+from os import getenv
+
 from rdkit import Chem
 from fastapi import FastAPI, UploadFile
 from fastapi import status
@@ -31,8 +33,8 @@ app = FastAPI()
 
 
 @app.get("/")
-def read_root():
-    return "Hello!"
+def get_server():
+    return {"server_id": getenv("SERVER_ID", "1")}
 
 
 @app.get('/api/v1/molecules', description="Retrieve all the available molecules")
@@ -126,4 +128,3 @@ async def upload_molecules(molecules: UploadFile):
             continue
 
     return f'{status.HTTP_201_CREATED} OK - ADDED {added} molecule{'s' if added > 1 else ''}'
-
