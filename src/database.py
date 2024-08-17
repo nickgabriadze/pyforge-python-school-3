@@ -1,10 +1,6 @@
-from datetime import datetime
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase, declared_attr, mapped_column
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase, declared_attr, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs
 from typing import Annotated
-from sqlalchemy import func
 from src.config import get_db_url
 
 SQLALCHEMY_DB_URL = get_db_url()
