@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   web1:
+    build: .
     build: ./src
     volumes:
       - ./src:/src
@@ -10,6 +11,7 @@ services:
       - "8000"
 
   web2:
+    build: .
     build: ./src
     volumes:
       - ./src:/src

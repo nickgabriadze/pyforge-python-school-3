@@ -36,9 +36,9 @@ app = FastAPI()
 def get_server():
     return {"server_id": getenv("SERVER_ID", "1")}
 
+
 def read_root():
     return "Hello!"
-
 
 
 @app.get('/api/v1/molecules', description="Retrieve all the available molecules")
