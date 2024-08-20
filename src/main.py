@@ -41,7 +41,6 @@ def read_root():
     return "Hello!"
 
 
-
 @app.get('/api/v1/molecules', description="Retrieve all the available molecules")
 def get_molecules():
     return molecules_db
