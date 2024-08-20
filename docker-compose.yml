@@ -2,6 +2,7 @@ version: '3.8'
 services:
   web1:
     build: .
+    build: ./src
     volumes:
       - ./src:/src
     environment:
@@ -11,6 +12,7 @@ services:
 
   web2:
     build: .
+    build: ./src
     volumes:
       - ./src:/src
     environment:
