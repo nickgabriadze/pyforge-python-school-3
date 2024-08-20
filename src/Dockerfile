@@ -4,10 +4,13 @@ RUN conda install conda-forge::rdkit
 
 WORKDIR /app
 
-COPY . /app
+COPY ./src ./src
+COPY ./tests ./tests
+COPY requirements.txt ./
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pytest tests/test_main.py
 
 ENV PORT=8000
 
