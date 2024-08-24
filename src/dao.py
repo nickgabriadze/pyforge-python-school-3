@@ -7,6 +7,19 @@ from src.database import async_session_maker
 class MoleculesDAO:
     model = Molecule
 
+
+    # TODO add limit to this function
+    @classmethod
+    async def get_molecules(cls):
+        async with async_session_maker() as session:
+            query = select(cls.model).order_by(
+                asc(
+                    cast(func.substring(cls.model.pubchem_id, r'[0-9]+'), Integer)
+                )
+            )
+            molecules = await session.execute(query)
+            return molecules.scalars().all()
+
     @classmethod
     async def get_all_molecules(cls):
         async with async_session_maker() as session:
