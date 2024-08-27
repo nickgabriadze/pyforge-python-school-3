@@ -4,20 +4,7 @@ from rdkit import Chem
 from fastapi import FastAPI, UploadFile
 from fastapi import status
 from .logger import setupLogging
-
-
-def substructure_search(mols, mol):
-    substructure_matches = []
-    initial_mol = Chem.MolFromSmiles(mol)
-
-    for molecule in mols:
-        list_mol = Chem.MolFromSmiles(molecule, sanitize=False)
-
-        if initial_mol.HasSubstructMatch(list_mol) \
-                or list_mol.HasSubstructMatch(initial_mol):
-            substructure_matches.append(molecule)
-
-    return substructure_matches
+from .iterators.sub_search import substructure_search
 
 
 logger = setupLogging()
@@ -26,15 +13,15 @@ app = FastAPI()
 
 @app.get("/")
 def get_server():
-    logging.info(f'[METHOD] /GET - [PATH] /')
+    logger.info(f'[METHOD] /GET - [PATH] /')
     return {"server_id": getenv("SERVER_ID", "1")}
 
 
 @app.get('/api/v1/molecules', description="Retrieve all the available molecules")
-async def get_molecules():
+async def get_molecules(limit=100):
     logger.info(f'[METHOD] /GET - [PATH] /api/v1/molecules')
 
-    return await MoleculesDAO.get_all_molecules()
+    return await MoleculesDAO.get_all_molecules(limit)
 
 
 @app.post('/api/v1/molecules', description="Add a new molecule")
@@ -89,14 +76,18 @@ async def delete_molecule(mol_id: str):
 
 @app.get('/api/v1/sub_match/{mol_smiles}',
          description="Match the substructure of given smiles molecule with other saved ones")
-async def get_sub_match(mol_smiles: str):
+async def get_sub_match(mol_smiles: str, limit=100):
     logger.info(f'[METHOD] /GET - [PATH] /api/v1/sub_match/{mol_smiles}')
 
+    sub_matches = []
     mol_smiles = mol_smiles.strip()
     if Chem.MolFromSmiles(mol_smiles):
-        all_molecules = [el.getSmiles() for el in (await MoleculesDAO.get_all_molecules())]
+        all_molecules = [el.getSmiles() for el in (await MoleculesDAO.get_all_molecules(limit))]
 
-        return substructure_search(all_molecules, mol_smiles)
+        for molecule in substructure_search(all_molecules, mol_smiles):
+            sub_matches.append(molecule)
+
+        return sub_matches
 
     logger.error(f'Failed to get submatch - {mol_smiles} is not a molecule')
     return f'{status.HTTP_400_BAD_REQUEST} BAD REQUEST - not a molecule'
