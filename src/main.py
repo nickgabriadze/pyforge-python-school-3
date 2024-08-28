@@ -135,4 +135,4 @@ async def upload_molecules(molecules: UploadFile):
         else:
             continue
     logger.info(f"[ACTION] ADD - {added} molecule{'s' if added > 1 else ''}")
-    return f'{status.HTTP_201_CREATED} OK - ADDED {added} molecule{'s' if added > 1 else ''}'
+    return f'{status.HTTP_201_CREATED} OK - ADDED {added} molecule{"s" if added > 1 else ""}'
