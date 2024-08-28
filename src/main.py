@@ -4,7 +4,7 @@ from rdkit import Chem
 from fastapi import FastAPI, UploadFile
 from fastapi import status
 from .logger import setupLogging
-from .iterators.sub_search import substructure_search
+from .generators.sub_search import substructure_search
 
 
 logger = setupLogging()
