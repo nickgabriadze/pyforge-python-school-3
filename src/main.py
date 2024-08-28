@@ -13,13 +13,13 @@ app = FastAPI()
 
 @app.get("/")
 def get_server():
-    logger.info(f'[METHOD] /GET - [PATH] /')
+    logger.info('[METHOD] /GET - [PATH] /')
     return {"server_id": getenv("SERVER_ID", "1")}
 
 
 @app.get('/api/v1/molecules', description="Retrieve all the available molecules")
 async def get_molecules(limit=100):
-    logger.info(f'[METHOD] /GET - [PATH] /api/v1/molecules')
+    logger.info('[METHOD] /GET - [PATH] /api/v1/molecules')
 
     return await MoleculesDAO.get_all_molecules(limit)
 
@@ -116,7 +116,7 @@ async def update_molecule(mol_id: str, new_mol_smiles: str):
 
 @app.post('/api/v1/upload-molecules')  # format is txt, each smiles is on the new line
 async def upload_molecules(molecules: UploadFile):
-    logger.info(f'[METHOD] /POST - [PATH] /api/v1/upload-molecules')
+    logger.info('[METHOD] /POST - [PATH] /api/v1/upload-molecules')
     contents = str(await molecules.read()).split('\\r\\n')
     added = 0
     elements = await MoleculesDAO.get_all_molecules()
