@@ -103,7 +103,7 @@ async def update_molecule(mol_id: str, new_mol_smiles: str):
     if new_molecule:
         request = await MoleculesDAO.update_molecule(pubchem_id=mol_id, new_mol_smiles=new_mol_smiles)
         if request is None:
-            logger.error(f'Failed to update the molecule - {mol_id} was not found or {new_mol_smiles} already exists')
+            logger.error(f'Failed to update the molecule - ID {mol_id} was not found or {new_mol_smiles} already exists')
             return f"{status.HTTP_404_NOT_FOUND} - Either corresponding ID was not found or smiles already exists"
 
         logger.info(f"[ACTION] UPDATE - {mol_id} with new value of {new_mol_smiles}")
