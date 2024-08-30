@@ -34,7 +34,7 @@ async def add_molecule(mol_smiles: str):
     new_molecule = Chem.MolFromSmiles(mol_smiles)
     # this ensures that whatever I pass as a parameter is a chemical and not some random string
     if new_molecule:
-        identifier = f"PUBCHEM{1 if len(elements) == 0 else int(elements[-1].pubchem_id.split("PUBCHEM")[1]) + 1}"
+        identifier = f"PUBCHEM{1 if len(elements) == 0 else int(elements[-1].pubchem_id.split('PUBCHEM')[1]) + 1}"
         result = await MoleculesDAO.add_smiles(pubchem_id=identifier, smiles=mol_smiles)
         if result is None:
             logger.error(f"Failed to add molecule - {mol_smiles} already exists")
