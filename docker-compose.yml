@@ -27,6 +27,11 @@ services:
     depends_on:
       - web1
       - web2
+      - redis
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
   postgres:
     image: postgres:latest
     container_name: postgres_molecules_database
