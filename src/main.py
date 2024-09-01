@@ -1,14 +1,17 @@
+import json
 from os import getenv
+import redis
 from .dao import MoleculesDAO
 from rdkit import Chem
 from fastapi import FastAPI, UploadFile
 from fastapi import status
 from .logger import setupLogging
 from .generators.sub_search import substructure_search
-
+from .caching.cache_handler import set_cache, get_cached_result, remove_cache
 
 logger = setupLogging()
 app = FastAPI()
+redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 
 @app.get("/")
@@ -51,12 +54,20 @@ async def add_molecule(mol_smiles: str):
 async def get_molecule(mol_id: str):
     logger.info(f'[METHOD] /GET - [PATH] /api/v1/molecules/{mol_id}')
 
+    cache_key = f"search:{mol_id}"
+    cached_result = get_cached_result(redis_client, cache_key)
+    if cached_result:
+        logger.info('[REDIS] - Returned cached result')
+        return cached_result
+
     mol_id = mol_id.strip()
     molecule = await MoleculesDAO.get_molecule_by_pubchem_id(pubchem_id=mol_id)
     if molecule is None:
         logger.error(f'Failed to get the molecule - {mol_id} not found')
         return f'{status.HTTP_404_NOT_FOUND} - NOT FOUND'
     else:
+        logger.info(f'[ACTION] CACHE - cached {cache_key}')
+        set_cache(redis_client, cache_key, molecule.smiles)
         return molecule.smiles
 
 
@@ -70,6 +81,9 @@ async def delete_molecule(mol_id: str):
         logger.error(f'Failed to delete the molecule with ID {mol_id} - not found')
         return f'{status.HTTP_404_NOT_FOUND} - NOT FOUND'
     else:
+        # if molecule with given pubchem id is deleted, the cache will be automatically removed
+        # if it exists
+        remove_cache(redis_client, f'search:{mol_id}')
         logger.info(f'[ACTION] DELETE - {mol_id}')
         return f'{status.HTTP_204_NO_CONTENT} - DELETED'
 
@@ -79,6 +93,12 @@ async def delete_molecule(mol_id: str):
 async def get_sub_match(mol_smiles: str, limit=100):
     logger.info(f'[METHOD] /GET - [PATH] /api/v1/sub_match/{mol_smiles}')
 
+    cache_key = f'sub_match:{mol_smiles}?limit={limit}'
+    cached = get_cached_result(redis_client, cache_key)
+    if cached:
+        logger.info('[REDIS] - Returned cached result')
+        return dict(cached).get('matches')
+
     sub_matches = []
     mol_smiles = mol_smiles.strip()
     if Chem.MolFromSmiles(mol_smiles):
@@ -87,6 +107,11 @@ async def get_sub_match(mol_smiles: str, limit=100):
         for molecule in substructure_search(all_molecules, mol_smiles):
             sub_matches.append(molecule)
 
+        logger.info(f'[ACTION] CACHE - cached {cache_key}')
+        # putting data to cache for 10 minutes, because sub-substructure matching requires significant
+        # time for computation
+        # and data doesn't change that frequently (till new molecules are added)
+        set_cache(redis_client, cache_key, {'matches': sub_matches}, 600)
         return sub_matches
 
     logger.error(f'Failed to get submatch - {mol_smiles} is not a molecule')
@@ -103,7 +128,8 @@ async def update_molecule(mol_id: str, new_mol_smiles: str):
     if new_molecule:
         request = await MoleculesDAO.update_molecule(pubchem_id=mol_id, new_mol_smiles=new_mol_smiles)
         if request is None:
-            logger.error(f'Failed to update the molecule - ID {mol_id} was not found or {new_mol_smiles} already exists')
+            logger.error(
+                f'Failed to update the molecule - ID {mol_id} was not found or {new_mol_smiles} already exists')
             return f"{status.HTTP_404_NOT_FOUND} - Either corresponding ID was not found or smiles already exists"
 
         logger.info(f"[ACTION] UPDATE - {mol_id} with new value of {new_mol_smiles}")
