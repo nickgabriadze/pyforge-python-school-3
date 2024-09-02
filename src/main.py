@@ -1,4 +1,3 @@
-import json
 from os import getenv
 import redis
 from .dao import MoleculesDAO
