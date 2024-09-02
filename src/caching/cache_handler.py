@@ -11,11 +11,12 @@ def get_cached_result(client, key: str):
     return None
 
 
-def remove_cache(client, key:str):
+def remove_cache(client, key: str):
     cacheExists = get_cached_result(client, key)
     if cacheExists:
         client.delete(key)
 
-def set_cache(client, key: str, value: dict, exp: int = 60):
-    client.setex(key, exp, json.dumps(value))
 
+def set_cache(client, key: str, value: dict, exp: int = 60):
+    # if 'exp' (expiration) is not passed, data is cached for 1 minute
+    client.setex(key, exp, json.dumps(value))
