@@ -14,7 +14,7 @@ def get_cached_result(client, key: str):
 def remove_cache(client, key:str):
     cacheExists = get_cached_result(client, key)
     if cacheExists:
-        redis_client.delete(key)
+        client.delete(key)
 
 def set_cache(client, key: str, value: dict, exp: int = 60):
     client.setex(key, exp, json.dumps(value))
