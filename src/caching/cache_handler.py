@@ -1,5 +1,4 @@
 import json
-import redis
 
 
 def get_cached_result(client, key: str):
