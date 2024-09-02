@@ -11,7 +11,7 @@ from .caching.cache_handler import set_cache, get_cached_result, remove_cache
 
 logger = setupLogging()
 app = FastAPI()
-redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0)
+redis_client = redis.Redis(host='redis', port=6379, db=0, password=getenv('REDIS_PASSWORD'))
 
 
 @app.get("/")
@@ -57,7 +57,7 @@ async def get_molecule(mol_id: str):
     cache_key = f"search:{mol_id}"
     cached_result = get_cached_result(redis_client, cache_key)
     if cached_result:
-        logger.info('[REDIS] - Returned cached result')
+        logger.info(f'[REDIS] - Returned cached result for {mol_id}')
         return cached_result
 
     mol_id = mol_id.strip()
@@ -96,7 +96,7 @@ async def get_sub_match(mol_smiles: str, limit=100):
     cache_key = f'sub_match:{mol_smiles}?limit={limit}'
     cached = get_cached_result(redis_client, cache_key)
     if cached:
-        logger.info('[REDIS] - Returned cached result')
+        logger.info(f'[REDIS] - Returned cached result for {cache_key}')
         return dict(cached).get('matches')
 
     sub_matches = []
