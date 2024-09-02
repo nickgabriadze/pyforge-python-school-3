@@ -108,8 +108,7 @@ async def get_sub_match(mol_smiles: str, limit=100):
             sub_matches.append(molecule)
 
         logger.info(f'[ACTION] CACHE - cached {cache_key}')
-        # putting data to cache for 10 minutes, because sub-substructure matching requires significant
-        # time for computation
+        # putting data to cache for 10 minutes, because sub-substructure matching requires significant amount of time for computation
         # and data doesn't change that frequently (till new molecules are added)
         set_cache(redis_client, cache_key, {'matches': sub_matches}, 600)
         return sub_matches
