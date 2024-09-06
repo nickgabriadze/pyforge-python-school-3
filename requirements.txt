@@ -11,3 +11,5 @@ alembic
 asyncpg
 psycopg2-binary
 redis
+celery
+
