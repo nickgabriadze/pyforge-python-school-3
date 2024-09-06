@@ -7,10 +7,30 @@ from fastapi import status
 from .logger import setupLogging
 from .generators.sub_search import substructure_search
 from .caching.cache_handler import set_cache, get_cached_result, remove_cache
+from src.celery_worker import celery
+from celery.result import AsyncResult
+from src.tasks import add_task
 
 logger = setupLogging()
 app = FastAPI()
 redis_client = redis.Redis(host='redis', port=6379, db=0, password=getenv('REDIS_PASSWORD'))
+
+
+@app.post("/tasks/add")
+async def create_task(x: int, y: int):
+    task = add_task.delay(10, x, y)
+    return {"task_id": task.id, "status": task.status}
+
+
+@app.get("/tasks/{task_id}")
+async def get_task_result(task_id: str):
+    task_result = AsyncResult(task_id, app=celery)
+    if task_result.state == 'PENDING':
+        return {"task_id": task_id, "status": "Task is still processing"}
+    elif task_result.state == 'SUCCESS':
+        return {"task_id": task_id, "status": "Task completed", "result": task_result.result}
+    else:
+        return {"task_id": task_id, "status": task_result.state}
 
 
 @app.get("/")
