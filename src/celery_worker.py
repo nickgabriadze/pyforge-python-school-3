@@ -6,5 +6,4 @@ celery = Celery(
     backend='redis://redis:6379/0'
 )
 celery.autodiscover_tasks(['src.tasks'])
-
 celery.conf.update(task_track_started=True)
