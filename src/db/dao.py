@@ -1,7 +1,7 @@
 from sqlalchemy import asc, cast, Integer, func, delete
 from sqlalchemy.future import select
-from src.molecules.models import Molecule
-from src.database import async_session_maker
+from ..molecules.models import Molecule
+from .database import async_session_maker
 
 
 class MoleculesDAO:

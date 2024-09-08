@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from fastapi import status
-from src.main import substructure_search
+from src.generators.sub_search import substructure_search
 
 
 @pytest.mark.parametrize('mols,mol,res',

@@ -1,6 +1,6 @@
 from os import getenv
 import redis
-from .dao import MoleculesDAO
+from .db.dao import MoleculesDAO
 from rdkit import Chem
 from fastapi import FastAPI, UploadFile
 from fastapi import status
