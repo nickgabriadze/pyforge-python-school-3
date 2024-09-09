@@ -9,16 +9,17 @@ from .generators.sub_search import substructure_search
 from .caching.cache_handler import set_cache, get_cached_result, remove_cache
 from src.celery_worker import celery
 from celery.result import AsyncResult
-from src.tasks import add_task
+from src.tasks import sub_search_task
 
 logger = setupLogging()
 app = FastAPI()
 redis_client = redis.Redis(host='redis', port=6379, db=0, password=getenv('REDIS_PASSWORD'))
 
 
-@app.post("/tasks/add")
-async def create_task(x: int, y: int):
-    task = add_task.delay(10, x, y)
+@app.post("/tasks/substructure_match")
+async def create_task(mol: str, limit: int = 100):
+    task = sub_search_task.delay(mol, limit)
+
     return {"task_id": task.id, "status": task.status}
 
 
