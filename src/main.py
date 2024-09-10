@@ -44,15 +44,15 @@ def get_server():
 async def get_molecules(limit=100):
     logger.info('[METHOD] /GET - [PATH] /api/v1/molecules')
 
-    return await MoleculesDAO.get_all_molecules(limit)
+    return await MoleculesDAO.get_molecules(limit)
 
 
-@app.post('/api/v1/molecules', description="Add a new molecule")
+@app.post('/api/v1/molecules/{mol_smiles}', description="Add a new molecule")
 async def add_molecule(mol_smiles: str):
     logger.info(f'[METHOD] /POST - [PATH] /api/v1/molecules/{mol_smiles}')
 
     mol_smiles = mol_smiles.strip()
-    elements = await MoleculesDAO.get_all_molecules()
+    elements = await MoleculesDAO.get_molecules()
 
     new_molecule = Chem.MolFromSmiles(mol_smiles)
     # this ensures that whatever I pass as a parameter is a chemical and not some random string
@@ -122,10 +122,14 @@ async def get_sub_match(mol_smiles: str, limit=100):
     sub_matches = []
     mol_smiles = mol_smiles.strip()
     if Chem.MolFromSmiles(mol_smiles):
-        all_molecules = [el.getSmiles() for el in (await MoleculesDAO.get_all_molecules(limit))]
-
+        all_molecules = [el.getSmiles() for el in (await MoleculesDAO.get_all_molecules())]
+        generated_matches = 0
         for molecule in substructure_search(all_molecules, mol_smiles):
-            sub_matches.append(molecule)
+            if generated_matches >= limit:
+                break
+            else:
+                sub_matches.append(molecule)
+                generated_matches += 1
 
         logger.info(f'[ACTION] CACHE - cached {cache_key}')
         # putting data to cache for 10 minutes, because sub-substructure matching requires significant amount of time for computation
@@ -164,7 +168,7 @@ async def upload_molecules(molecules: UploadFile):
     logger.info('[METHOD] /POST - [PATH] /api/v1/upload-molecules')
     contents = str(await molecules.read()).split('\\r\\n')
     added = 0
-    elements = await MoleculesDAO.get_all_molecules()
+    elements = await MoleculesDAO.get_molecules()
     identifier = 1 if len(elements) == 0 else int(elements[-1].pubchem_id.split("PUBCHEM")[1]) + 1
 
     for mol_smiles in contents:
