@@ -110,7 +110,7 @@ async def delete_molecule(mol_id: str):
 
 @app.get('/api/v1/sub_match/{mol_smiles}',
          description="Match the substructure of given smiles molecule with other saved ones")
-async def get_sub_match(mol_smiles: str, limit=100):
+async def get_sub_match(mol_smiles: str, limit: int = 100):
     logger.info(f'[METHOD] /GET - [PATH] /api/v1/sub_match/{mol_smiles}')
 
     cache_key = f'sub_match:{mol_smiles}?limit={limit}'
