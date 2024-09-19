@@ -27,6 +27,16 @@ services:
     depends_on:
       - web1
       - web2
+  redis:
+    image: "redis:alpine"
+    restart: 'always'
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
   postgres:
     image: postgres:latest
     container_name: postgres_molecules_database
@@ -65,5 +75,7 @@ services:
     stdin_open: true
 
 volumes:
+  cache:
+    driver: local
   pgdata:
     driver: local
