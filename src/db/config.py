@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     model_config = SettingsConfigDict(
         extra='allow',
-        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..", ".env")
     )
 
 
