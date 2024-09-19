@@ -7,6 +7,7 @@ WORKDIR /app
 COPY ./src ./src
 COPY ./tests ./tests
 COPY requirements.txt ./
+COPY .env ./
 
 
 RUN pip install --no-cache-dir -r requirements.txt

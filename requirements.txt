@@ -5,3 +5,8 @@ flake8
 rdkit
 python-multipart
 httpx
+pydantic_settings
+SQLAlchemy
+alembic
+asyncpg
+psycopg2-binary

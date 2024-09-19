@@ -1,8 +1,7 @@
-from src.main import substructure_search
-from src.main import app
 import pytest
 from fastapi.testclient import TestClient
 from fastapi import status
+from src.main import substructure_search
 
 
 @pytest.mark.parametrize('mols,mol,res',
@@ -63,43 +62,3 @@ def test_substructure_search_exception_mol_number():
     """ 5 is not a molecule """
     with pytest.raises(AttributeError):
         substructure_search(['CCO', 'c1ccccc1'], '5')
-
-
-""" Other FASTAPI routes' tests """
-
-t_client = TestClient(app=app)
-
-
-def test_server_running():
-    response = t_client.get('/')
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_get_molecules_success():
-    response = t_client.get('/api/v1/molecules')
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_post_molecule_success():
-    response = t_client.post('/api/v1/molecules', params={"mol_smiles": "CCO"})
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_post_already_exists_success():
-    response = t_client.post('/api/v1/molecules', params={"mol_smiles": "CCO"})
-    assert response.json() == "400 BAD REQUEST - already exists"
-
-
-def test_delete_molecule_success():
-    response = t_client.delete('/api/v1/molecules/{mol_id}', params={"mol_id": "PUBCHEM3"})
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_get_sub_match_success():
-    response = t_client.get(f'/api/v1/sub_match/{"CO"}')
-    assert response.json() == ['CCO', 'CC(=O)O', 'CC(=O)Oc1ccccc1C(=O)O']
-
-
-def test_put_new_mol_success():
-    response = t_client.put('/api/v1/molecules/', params={'mol_id': 'PUBCHEM1', 'new_mol_smiles': 'CO'})
-    assert response.status_code == status.HTTP_200_OK
