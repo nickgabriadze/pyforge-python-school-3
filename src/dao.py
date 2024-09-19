@@ -8,7 +8,7 @@ class MoleculesDAO:
     model = Molecule
 
     @classmethod
-    async def get_all_molecules(cls):
+    async def get_all_molecules(cls, limit=100):
         async with async_session_maker() as session:
             # since I have PUBCHEM{number} as a primary column in my database, I have to use a different
             # approach for the ascending style
@@ -16,7 +16,7 @@ class MoleculesDAO:
                 asc(
                     cast(func.substring(cls.model.pubchem_id, r'[0-9]+'), Integer)
                 )
-            )
+            ).limit(limit)
             molecules = await session.execute(query)
             return molecules.scalars().all()
 

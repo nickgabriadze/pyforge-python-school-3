@@ -29,36 +29,55 @@ from src.main import substructure_search
                              (["COC", "NCCO", "OCC"], "N", ["NCCO"]),
                          ])
 def test_substructure_search(mols, mol, res):
-    assert substructure_search(mols, mol) == res
+    sub_matches = []
+    for mol in substructure_search(mols, mol):
+        sub_matches.append(mol)
+
+    assert sub_matches == res
 
 
 @pytest.mark.xfail(reason="H2O is not in mols and H2O is not substructure of CO, should have been []")
 def test_substructure_search_fail_not_in_mols():
-    assert substructure_search(['CO'], "H2O") == ["CO"]
+    sub_matches = []
+    for mol in substructure_search(['CO'], "H2O"):
+        sub_matches.append(mol)
+
+    assert sub_matches == ['CO']
 
 
 @pytest.mark.xfail(reason="result is all of them and shouldn't be an empty list")
 def test_substructure_search_empty():
-    assert substructure_search(["CCO", "CCC", "CCN", "CNC"], "C") == []
+    sub_matches = []
+    for mol in substructure_search(["CCO", "CCC", "CCN", "CNC"], "C"):
+        sub_matches.append(mol)
+
+    assert sub_matches == []
 
 
 def test_substructure_search_same():
-    assert substructure_search(['CCO', 'c1ccccc1'], 'c1ccccc1') == ['c1ccccc1']
+    sub_matches = []
+    for mol in substructure_search(['CCO', 'c1ccccc1'], "c1ccccc1"):
+        sub_matches.append(mol)
+
+    assert sub_matches == ['c1ccccc1']
 
 
 def test_substructure_search_exception_mols():
     """ won't be able to parse SMILES "21" as molecule"""
     with pytest.raises(TypeError):
-        substructure_search(['21', 'c1ccccc1', 'NCC'], 'CO')
+        for _ in substructure_search(['21', 'c1ccccc1', 'NCC'], 'CO'):
+            continue
 
 
 def test_substructure_search_exception_mol():
     """ c1cccc1 is not a molecule """
     with pytest.raises(AttributeError):
-        substructure_search(['CCO', 'c1ccccc1'], 'c1cccc1')
+        for _ in substructure_search(['CCO', 'c1ccccc1'], 'c1cccc1'):
+            continue
 
 
 def test_substructure_search_exception_mol_number():
     """ 5 is not a molecule """
     with pytest.raises(AttributeError):
-        substructure_search(['CCO', 'c1ccccc1'], '5')
+        for _ in substructure_search(['CCO', 'c1ccccc1'], '5'):
+            continue
