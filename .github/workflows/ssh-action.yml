@@ -23,5 +23,3 @@ jobs:
           echo "Deploying to EC2..."
           cd projects/pyforge-python-school-3
           git pull origin main
-          docker-compose down
-          docker-compose up -d
