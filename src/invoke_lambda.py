@@ -10,4 +10,3 @@ response = lambda_client.invoke(
 
 response_payload = response['Payload'].read()
 print(response_payload)
-
