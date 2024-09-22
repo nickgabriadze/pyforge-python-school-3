@@ -8,9 +8,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+    - run: echo "SSH_HOST is ${{ secrets.SSH_HOST }}"
     - name: Checkout code
       uses: actions/checkout@v2
-
+    
     - name: SSH into EC2
       uses: appleboy/ssh-action@v1.0.3
       with:
