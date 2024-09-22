@@ -1,94 +1,36 @@
-# Python Summer School 2024
-
-## Substructure search
-
-Substructure search of chemical compounds is a crucial tool in cheminformatics, enabling researchers to identify and analyze chemical structures containing specific substructures. This method is widely applied in various fields of chemistry, including drug discovery, materials science, and environmental research. Substructure search helps scientists and engineers identify compounds with desired properties, predict reactivity, and understand the mechanisms of chemical reactions.
-
-Modern chemical compound databases contain millions of entries, making traditional search methods inefficient and time-consuming. Substructure search utilizes algorithms that allow for quick and accurate identification of compounds with specified structural fragments. These algorithms are based on graph theory and the use of SMARTS (SMiles ARbitrary Target Specification) codes, ensuring high performance and precision in the search process.
-
-## SMILES
-
-A key element in the representation of chemical structures is the Simplified Molecular Input Line Entry System (SMILES). SMILES is a notation that allows a user to represent a chemical structure in a way that can be easily processed by computers. It encodes molecular structures as a series of text strings, which can then be used for various computational analyses, including substructure searches. The simplicity and efficiency of SMILES make it a widely adopted standard in cheminformatics.
-
-Here are some examples of SMILES notation:
-
-- Water (H₂O): O
-
-- Methane (CH₄): C
-
-- Ethanol (C₂H₅OH): CCO
-
-- Benzene (C₆H₆): c1ccccc1
-
-- Acetic acid (CH₃COOH): CC(=O)O
-
-- Aspirin (C₉H₈O₄): CC(=O)Oc1ccccc1C(=O)O
-
-## Examples of Substructure Search
+# Deployment to EC2 Instance
 
 
-Below are some examples of substructure searches with visual representations:
 
-1. Searching for the Benzene Ring:
-   - Substructure (Benzene): c1ccccc1
-   
-   <img title="a title" alt="Alt text" src="./images/c1ccccc1.png">
-   
-   - Example of Found Compound (Toluene): Cc1ccccc1
-   
-   <img title="a title" alt="Alt text" src="./images/Cc1ccccc1.png">
-   
-2. Searching for a Carboxylic Acid Group:
-   - Substructure (Carboxylic Acid): C(=O)O
-   
-   <img title="a title" alt="Alt text" src="./images/C(=O)O.png">
-   
-   - Example of Found Compound (Acetic Acid): CC(=O)O
-   
-   <img title="a title" alt="Alt text" src="./images/CC(=O)O.png">
+### Steps Taken
 
-These examples illustrate how substructure searches can be used to find compounds containing specific functional groups or structural motifs. By using SMILES notation and cheminformatics tools, researchers can efficiently identify and study compounds of interest.
+1. **Created `ssh-action.yml`**
 
-## Homework
+   Created a GitHub Actions workflow file named `ssh-action.yml` to manage the deployment process via SSH.
 
-Every week we will add tasks to the folder **hw**. 
-Delivery details are available in the **README.md** in the **hw**
+2. **Started EC2 Instance**
 
-## Roadmap
+   Logged into the AWS Management Console and manually started an EC2 instance to serve as the deployment target.
 
-As part of our homeworks, we will try to build a web service for storing and substructural search of chemical compounds
+3. **Created Directory on EC2**
 
-- Use the **RDKit** library to implement substructure search
+   SSH’d into the EC2 instance and created a directory named `projects` where the repository would be stored.
 
-<img title="a title" alt="Alt text" src="./images/1.png">
+   ```bash
+   mkdir -p /home/projects
+4. **Cloned Repository into `projects` Directory**
 
-- Build RESTful API using **FastApi**
+   Cloned the repository containing the application code into the `projects` directory on the EC2 instance.
+5. **Configured EC2 Environment**
 
-<img title="a title" alt="Alt text" src="./images/2.png">
+   Configured the EC2 environment for the repository by setting up GitHub Secrets:
+   - **`SSH_HOST`**: The public IP address of the EC2 instance.
+   - **`SSH_KEY`**: The private key of the key-pair used for SSH access.
 
-- Containerizing our solution using **Docker**
+6. **Added Deployment Script**
 
-<img title="a title" alt="Alt text" src="./images/3.png">
+   Added a script to the GitHub Actions workflow to automatically pull all the changes from the repository.
 
-- Adding tests using **pytest**
+7. **Verified Deployment**
 
-<img title="a title" alt="Alt text" src="./images/4.png">
-
-- **CI / CD**
-
-<img title="a title" alt="Alt text" src="./images/5.png">
-
-- We will add a **database** for storing molecules
-
-<img title="a title" alt="Alt text" src="./images/6.png">
-
-- **Logging**
-
-<img title="a title" alt="Alt text" src="./images/7.png">
-
-- We will add caching using **Redis** to optimize queries
-
-<img title="a title" alt="Alt text" src="./images/8.png">
-
-- **Celery** to speed up queries
-<img title="a title" alt="Alt text" src="./images/9.png">
+   After running the action, it successfully SSH’d into the EC2 instance and pulled the latest code from the repository, thus updating the project contents.
