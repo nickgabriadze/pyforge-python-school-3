@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: web2
+  name: web2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: web2
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.network/pyforge-python-school-3-default: "true"
+        io.kompose.service: web2
+    spec:
+      containers:
+        - env:
+            - name: SERVER_ID
+              value: SERVER-2
+          image: web2
+          name: web2
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /src
+              name: web2-claim0
+      restartPolicy: Always
+      volumes:
+        - name: web2-claim0
+          persistentVolumeClaim:
+            claimName: web2-claim0
+status: {}
