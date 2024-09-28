@@ -170,7 +170,7 @@ async def update_molecule(mol_id: str, new_mol_smiles: str):
 @app.post('/api/v1/upload-molecules')  # format is txt, each smiles is on the new line
 async def upload_molecules(molecules: UploadFile):
     logger.info('[METHOD] /POST - [PATH] /api/v1/upload-molecules')
-    contents = str(await molecules.read()).split('\\r\\n')
+    contents = str(await molecules.read()).split('\\n')
     added = 0
     elements = await MoleculesDAO.get_molecules()
     identifier = 1 if len(elements) == 0 else int(elements[-1].pubchem_id.split("PUBCHEM")[1]) + 1

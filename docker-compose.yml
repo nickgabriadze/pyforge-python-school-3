@@ -1,5 +1,6 @@
 version: '3.8'
 services:
+
   web1:
     build: .
     volumes:
@@ -21,12 +22,13 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "80:80"
+      - "80"
     volumes:
       - ./nginx:/etc/nginx/conf.d
     depends_on:
       - web1
       - web2
+
   redis:
     image: "redis:alpine"
     restart: 'always'
@@ -37,6 +39,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
+
   celery_worker:
     build: .
     command: celery -A src.celery_worker worker --loglevel=info
@@ -44,6 +47,7 @@ services:
       - redis
     volumes:
       - .:/app
+
   postgres:
     image: postgres:latest
     container_name: postgres_molecules_database
@@ -53,7 +57,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5433"
+      - "5432"
     volumes:
       - pgdata:/var/lib/postgresql/data/pgdata
     deploy:
@@ -80,6 +84,68 @@ services:
     restart: unless-stopped
     tty: true
     stdin_open: true
+
+
+  airflow_webserver:
+    image: apache/airflow:2.6.3
+    container_name: airflow_webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: airflow webserver
+
+  airflow_scheduler:
+    image: apache/airflow:2.6.3
+    container_name: airflow_scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: airflow scheduler
+
+  airflow_worker:
+    image: apache/airflow:2.6.3
+    container_name: airflow_worker
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: airflow celery worker
+
+  airflow_init:
+    image: apache/airflow:2.6.3
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    entrypoint: "airflow db init"
 
 volumes:
   cache:
