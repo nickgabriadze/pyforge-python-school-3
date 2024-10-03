@@ -1,4 +1,30 @@
 version: '3.8'
+
+
+x-airflow-common: &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.10.1}
+  environment: &airflow-common-env
+
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.session"
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-rdkit}
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+  depends_on: &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+
+
+
 services:
 
   web1:
@@ -38,7 +64,7 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
-      - "6379:6379"
+      - "6379"
 
   celery_worker:
     build: .
@@ -86,66 +112,59 @@ services:
     stdin_open: true
 
 
-  airflow_webserver:
-    image: apache/airflow:2.6.3
-    container_name: airflow_webserver
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
     ports:
       - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
     depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-    command: airflow webserver
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
 
-  airflow_scheduler:
-    image: apache/airflow:2.6.3
-    container_name: airflow_scheduler
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
     depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-    command: airflow scheduler
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
 
-  airflow_worker:
-    image: apache/airflow:2.6.3
-    container_name: airflow_worker
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    restart: always
     depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-    command: airflow celery worker
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
 
-  airflow_init:
-    image: apache/airflow:2.6.3
+  airflow-init:
+    <<: *airflow-common
+    command: version
     environment:
-      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6379/0
-      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-    entrypoint: "airflow db init"
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+
 
 volumes:
   cache:
