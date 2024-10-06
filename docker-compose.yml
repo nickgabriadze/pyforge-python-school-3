@@ -26,6 +26,10 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- rdkit boto3 apache-airflow-providers-amazon apache-airflow-providers-postgres pandas openpyxl}
     # Additional env
     AIRFLOW__CORE__LAZY_LOAD_PLUGINS: 'false'
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+
   volumes:
     - ./airflow:/opt/airflow/
     - ./airflow/dags:/opt/airflow/dags
