@@ -1,9 +1,8 @@
 from collections import defaultdict
+import boto3
 from airflow import DAG
-from airflow.providers.amazon.aws.operators.s3 import S3CreateObjectOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-import json
 import pendulum
 import logging
 import pandas as pd
@@ -35,7 +34,7 @@ def analyze_molecule(smiles, analyzed_dict):
     ]))
 
 
-def generate_json_for_molecules(**context):
+def generate_xlsx_for_molecules(**context):
     molecules = context['ti'].xcom_pull(task_ids='execute_sql')
     logging.info(molecules)
     analyzed_dict = defaultdict(list)
@@ -44,12 +43,22 @@ def generate_json_for_molecules(**context):
         # I have two columns in database table(id, smiles)
         analyze_molecule(molecule[1], analyzed_dict)
 
-
     analyzed_frame = pd.DataFrame(analyzed_dict)
+    logging.info(analyzed_frame)
     xlsx_output = 'analyzed_smiles.xlsx'
     with pd.ExcelWriter(xlsx_output, engine='openpyxl') as writer:
         analyzed_frame.to_excel(writer, index=False)
 
+    context['ti'].xcom_push(key='file_path', value=xlsx_output)
+
+
+def upload_xlsx_to_s3(**context):
+    file_path = context['ti'].xcom_pull(task_ids='generate_xlsx_for_molecules', key='file_path')
+
+    s3_client = boto3.client('s3')
+    logging.info(f"File {file_path} uploaded to S3 bucket hw-bucket-3000 as analyzed_smiles.xlsx")
+
+    s3_client.upload_file(file_path, 'hw-bucket-3000', 'analyzed_smiles.xlsx')
 
 
 default_args = {
@@ -66,22 +75,19 @@ with DAG(
 ) as dag:
     retrieve_molecules = PostgresOperator(
         task_id='execute_sql',
-        sql='SELECT * FROM molecules LIMIT 10',
+        sql='SELECT * FROM molecules LIMIT 20',
         postgres_conn_id='molecules_database'
 
     )
 
-    generate_json_task = PythonOperator(
-        task_id='generate_json_for_molecules',
-        python_callable=generate_json_for_molecules,
+    generate_xlsx_task = PythonOperator(
+        task_id='generate_xlsx_for_molecules',
+        python_callable=generate_xlsx_for_molecules,
     )
 
-    upload_to_s3 = S3CreateObjectOperator(
-        task_id="create_object",
-        s3_bucket='hw-bucket-3000',
-        s3_key='analyzed_smiles.xlsx',
-        data='./analyzed_smiles.xlsx',
-        replace=True,
+    upload_to_s3 = PythonOperator(
+        task_id="upload_to_s3",
+        python_callable=upload_xlsx_to_s3
     )
 
-retrieve_molecules >> generate_json_task >> upload_to_s3
+    retrieve_molecules >> generate_xlsx_task >> upload_to_s3
