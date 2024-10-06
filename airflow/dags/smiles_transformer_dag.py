@@ -6,7 +6,6 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 import pendulum
 import logging
 import pandas as pd
-
 from rdkit import Chem
 from rdkit.Chem.Crippen import MolLogP
 from rdkit.Chem.Descriptors import MolWt
